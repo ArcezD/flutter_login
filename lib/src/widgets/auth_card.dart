@@ -29,6 +29,9 @@ class AuthCard extends StatefulWidget {
     this.passwordValidator,
     this.onSubmit,
     this.onSubmitCompleted,
+    this.onPressedSignUp,
+    this.hideButtonForgotPassword,
+    this.hideButtonSignUp,
   }) : super(key: key);
 
   final EdgeInsets padding;
@@ -37,6 +40,9 @@ class AuthCard extends StatefulWidget {
   final FormFieldValidator<String> passwordValidator;
   final Function onSubmit;
   final Function onSubmitCompleted;
+  final Function onPressedSignUp;
+  final bool hideButtonForgotPassword;
+  final bool hideButtonSignUp;
 
   @override
   AuthCardState createState() => AuthCardState();
@@ -295,6 +301,9 @@ class AuthCardState extends State<AuthCard> with TickerProviderStateMixin {
                         widget?.onSubmitCompleted();
                       });
                     },
+                    onPressedSignUp: widget.onPressedSignUp,
+                    hideButtonForgotPassword: widget.hideButtonForgotPassword,
+                    hideButtonSignUp: widget.hideButtonSignUp,
                   ),
                 )
               : _RecoverCard(
@@ -335,6 +344,9 @@ class _LoginCard extends StatefulWidget {
     @required this.onSwitchRecoveryPassword,
     this.onSwitchAuth,
     this.onSubmitCompleted,
+    this.onPressedSignUp,
+    this.hideButtonForgotPassword,
+    this.hideButtonSignUp,
   }) : super(key: key);
 
   final AnimationController loadingController;
@@ -343,6 +355,9 @@ class _LoginCard extends StatefulWidget {
   final Function onSwitchRecoveryPassword;
   final Function onSwitchAuth;
   final Function onSubmitCompleted;
+  final Function onPressedSignUp;
+  final bool hideButtonForgotPassword;
+  final bool hideButtonSignUp;
 
   @override
   _LoginCardState createState() => _LoginCardState();
@@ -454,13 +469,20 @@ class _LoginCardState extends State<_LoginCard> with TickerProviderStateMixin {
   }
 
   void _switchAuthMode() {
-    final auth = Provider.of<Auth>(context, listen: false);
-    final newAuthMode = auth.switchAuth();
+    if(widget.onPressedSignUp != null)
+    {
+        widget.onPressedSignUp();
+    }
+    else
+    {
+        final auth = Provider.of<Auth>(context, listen: false);
+        final newAuthMode = auth.switchAuth();
 
-    if (newAuthMode == AuthMode.Signup) {
-      _switchAuthController.forward();
-    } else {
-      _switchAuthController.reverse();
+        if (newAuthMode == AuthMode.Signup) {
+        _switchAuthController.forward();
+        } else {
+        _switchAuthController.reverse();
+        }
     }
   }
 
@@ -609,6 +631,8 @@ class _LoginCardState extends State<_LoginCard> with TickerProviderStateMixin {
   }
 
   Widget _buildForgotPassword(ThemeData theme, LoginMessages messages) {
+    if(widget.hideButtonForgotPassword) return Container();
+    
     return FadeIn(
       controller: _loadingController,
       fadeDirection: FadeDirection.bottomToTop,
@@ -641,6 +665,9 @@ class _LoginCardState extends State<_LoginCard> with TickerProviderStateMixin {
   }
 
   Widget _buildSwitchAuthButton(ThemeData theme, LoginMessages messages, Auth auth) {
+    final auth = Provider.of<Auth>(context, listen: false);
+    if(widget.hideButtonSignUp) return Container();
+    
     return FadeIn(
       controller: _loadingController,
       offset: .5,
