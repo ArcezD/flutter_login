@@ -220,6 +220,7 @@ class FlutterLogin extends StatefulWidget {
     @required this.onLogin,
     @required this.onRecoverPassword,
     this.onPressedSignUp,
+    this.onAccountConfirmation,
     this.title,
     this.logo,
     this.messages,
@@ -242,6 +243,9 @@ class FlutterLogin extends StatefulWidget {
 
   /// Called when the user hit the submit button when in login mode
   final AuthCallback onLogin;
+
+  /// Called when returned ACCOUNT_CONFIRMATION_REQUIRED message at SignUp or Login
+  final AccountConfirmationCallback onAccountConfirmation;
 
   /// list of LoginProvider each have an icon and a callback that will be Called when
   /// the user hit the provider icon button
@@ -591,6 +595,7 @@ class _FlutterLoginState extends State<FlutterLogin>
             onLogin: widget.onLogin,
             onSignup: widget.onSignup,
             onRecoverPassword: widget.onRecoverPassword,
+            onAccountConfirmation: widget.onAccountConfirmation,
             loginProvidersList: widget.loginProvidersList,
           ),
         ),

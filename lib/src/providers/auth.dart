@@ -9,6 +9,9 @@ enum AuthMode { Signup, Login }
 typedef AuthCallback = Future<String> Function(LoginData);
 
 /// The result is an error message, callback successes if message is null
+typedef AccountConfirmationCallback = Future<String> Function(String);
+
+/// The result is an error message, callback successes if message is null
 typedef ProviderAuthCallback = Future<String> Function();
 
 /// The result is an error message, callback successes if message is null
@@ -20,16 +23,20 @@ class Auth with ChangeNotifier {
     this.onLogin,
     this.onSignup,
     this.onRecoverPassword,
+    this.onAccountConfirmation,
     String email = '',
     String password = '',
     String confirmPassword = '',
+    String confirmationCode = '',
   })  : this._email = email,
         this._password = password,
-        this._confirmPassword = confirmPassword;
+        this._confirmPassword = confirmPassword,
+        this._confirmationCode = confirmationCode;
 
   final AuthCallback onLogin;
   final AuthCallback onSignup;
   final RecoverCallback onRecoverPassword;
+  final AccountConfirmationCallback onAccountConfirmation;
   final List<LoginProvider> loginProvidersList;
 
   AuthMode _mode = AuthMode.Login;
@@ -43,6 +50,7 @@ class Auth with ChangeNotifier {
   bool get isLogin => _mode == AuthMode.Login;
   bool get isSignup => _mode == AuthMode.Signup;
   bool isRecover = false;
+  bool isAccountConfirmation = false;
 
   AuthMode opposite() {
     return _mode == AuthMode.Login ? AuthMode.Signup : AuthMode.Login;
@@ -75,6 +83,13 @@ class Auth with ChangeNotifier {
   get confirmPassword => _confirmPassword;
   set confirmPassword(String confirmPassword) {
     _confirmPassword = confirmPassword;
+    notifyListeners();
+  }
+
+  String _confirmationCode = '';
+  get confirmationCode => _confirmationCode;
+  set confirmationCode(String confirmationCode) {
+    _confirmationCode = confirmationCode;
     notifyListeners();
   }
 }

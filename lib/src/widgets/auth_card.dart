@@ -154,6 +154,20 @@ class AuthCardState extends State<AuthCard> with TickerProviderStateMixin {
     }
   }
 
+  void _switchAccountConfirmation() {
+    final auth = Provider.of<Auth>(context, listen: false);
+
+    auth.isAccountConfirmation = true;
+    _pageController.jumpToPage(2);
+    // TODO: Implement animation to page but whitout pass to RecoverPassword
+    /*.animateToPage(
+      2,
+      duration: Duration(milliseconds: 500),
+      curve: Curves.ease,
+    );*/
+    _pageIndex = 2;
+  }
+
   Future<void> runLoadingAnimation() {
     if (widget.loadingController.isDismissed) {
       return widget.loadingController.forward().then((_) {
@@ -296,6 +310,7 @@ class AuthCardState extends State<AuthCard> with TickerProviderStateMixin {
                     emailValidator: widget.emailValidator,
                     passwordValidator: widget.passwordValidator,
                     onSwitchRecoveryPassword: () => _switchRecovery(true),
+                    onSwitchAccountConfirmation: () => _switchAccountConfirmation(),
                     onSubmitCompleted: () {
                       _forwardChangeRouteAnimation().then((_) {
                         widget?.onSubmitCompleted();
@@ -306,9 +321,17 @@ class AuthCardState extends State<AuthCard> with TickerProviderStateMixin {
                     hideButtonSignUp: widget.hideButtonSignUp,
                   ),
                 )
+              : (index == 2)
+              ? _AccountConfirmationCard(
+                  onSubmitCompleted: () {
+                    widget?.onSubmitCompleted();
+                    /*_forwardChangeRouteAnimation().then((_) {
+                      widget?.onConfirmationCompleted();
+                    });*/
+                  })
               : _RecoverCard(
-                  emailValidator: widget.emailValidator,
-                  onSwitchLogin: () => _switchRecovery(false),
+                emailValidator: widget.emailValidator,
+                onSwitchLogin: () => _switchRecovery(false),
                 );
 
           return Align(
@@ -342,6 +365,7 @@ class _LoginCard extends StatefulWidget {
     @required this.emailValidator,
     @required this.passwordValidator,
     @required this.onSwitchRecoveryPassword,
+    @required this.onSwitchAccountConfirmation,
     this.onSwitchAuth,
     this.onSubmitCompleted,
     this.onPressedSignUp,
@@ -353,6 +377,7 @@ class _LoginCard extends StatefulWidget {
   final FormFieldValidator<String> emailValidator;
   final FormFieldValidator<String> passwordValidator;
   final Function onSwitchRecoveryPassword;
+  final Function onSwitchAccountConfirmation;
   final Function onSwitchAuth;
   final Function onSubmitCompleted;
   final Function onPressedSignUp;
@@ -372,6 +397,7 @@ class _LoginCardState extends State<_LoginCard> with TickerProviderStateMixin {
   TextEditingController _nameController;
   TextEditingController _passController;
   TextEditingController _confirmPassController;
+  TextEditingController _confirmationCodeController;
 
   var _isLoading = false;
   var _isSubmitting = false;
@@ -400,6 +426,7 @@ class _LoginCardState extends State<_LoginCard> with TickerProviderStateMixin {
     _nameController = TextEditingController(text: auth.email);
     _passController = TextEditingController(text: auth.password);
     _confirmPassController = TextEditingController(text: auth.confirmPassword);
+    _confirmationCodeController = TextEditingController(text: auth.confirmationCode);
 
     _loadingController = widget.loadingController ??
         (AnimationController(
@@ -512,6 +539,13 @@ class _LoginCardState extends State<_LoginCard> with TickerProviderStateMixin {
         name: auth.email,
         password: auth.password,
       ));
+    }
+
+    if (!DartHelper.isNullOrEmpty(error)) {
+      if (error == 'ACCOUNT_CONFIRMATION_REQUIRED') {
+        widget?.onSwitchAccountConfirmation();
+        return true;
+      }
     }
 
     // workaround to run after _cardSizeAnimation in parent finished
@@ -932,6 +966,147 @@ class _RecoverCardState extends State<_RecoverCard>
                 SizedBox(height: 26),
                 _buildRecoverButton(theme, messages),
                 _buildBackButton(theme, messages),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _AccountConfirmationCard extends StatefulWidget {
+  _AccountConfirmationCard({
+    Key key,
+    @required this.onConfirmationCompleted,
+    @required this.onSubmitCompleted,
+  }) : super(key: key);
+
+  final Function onConfirmationCompleted;
+  final Function onSubmitCompleted;
+
+  @override
+  _AccountConfirmationCardState createState() => _AccountConfirmationCardState();
+}
+
+class _AccountConfirmationCardState extends State<_AccountConfirmationCard>
+    with SingleTickerProviderStateMixin {
+  final GlobalKey<FormState> _formAccountConfirmationKey = GlobalKey();
+
+  TextEditingController _confirmationCodeController;
+
+  var _isSubmitting = false;
+
+  AnimationController _submitController;
+
+  @override
+  void initState() {
+    super.initState();
+
+    final auth = Provider.of<Auth>(context, listen: false);
+    _confirmationCodeController = new TextEditingController(text: auth.confirmationCode);
+
+    _submitController = AnimationController(
+      vsync: this,
+      duration: Duration(milliseconds: 1000),
+    );
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
+    _submitController.dispose();
+  }
+
+  Future<bool> _submit() async {
+    if (!_formAccountConfirmationKey.currentState.validate()) {
+      return false;
+    }
+    final auth = Provider.of<Auth>(context, listen: false);
+    final messages = Provider.of<LoginMessages>(context, listen: false);
+
+    _formAccountConfirmationKey.currentState.save();
+    _submitController.forward();
+    setState(() => _isSubmitting = true);
+    final error = await auth.onAccountConfirmation(auth.confirmationCode);
+
+    if (error != null) {
+      showErrorToast(context, error);
+      setState(() => _isSubmitting = false);
+      _submitController.reverse();
+      return false;
+    } else {
+      showSuccessToast(context, messages.recoverPasswordSuccess);
+      setState(() => _isSubmitting = false);
+      widget?.onSubmitCompleted(); //.onConfirmationCompleted();
+      return true;
+    }
+  }
+
+  Widget _buildConfirmationNameField(double width, LoginMessages messages, Auth auth) {
+    return AnimatedTextFormField(
+      controller: _confirmationCodeController,
+      width: width,
+      labelText: messages.confirmationCodeHint,
+      prefixIcon: Icon(FontAwesomeIcons.solidCheckCircle),
+      keyboardType: TextInputType.text,
+      textInputAction: TextInputAction.done,
+      onFieldSubmitted: (value) => _submit(),
+      onSaved: (value) => auth.confirmationCode = value,
+    );
+  }
+
+  Widget _buildConfirmButton(ThemeData theme, LoginMessages messages) {
+    return AnimatedButton(
+      controller: _submitController,
+      text: messages.confirmAccountButton,
+      onPressed: !_isSubmitting ? _submit : null,
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final auth = Provider.of<Auth>(context, listen: false);
+    final messages = Provider.of<LoginMessages>(context, listen: false);
+    final deviceSize = MediaQuery.of(context).size;
+    final cardWidth = min(deviceSize.width * 0.75, 360.0);
+    const cardPadding = 16.0;
+    final textFieldWidth = cardWidth - cardPadding * 2;
+
+    return FittedBox(
+      // width: cardWidth,
+      child: Card(
+        child: Container(
+          padding: const EdgeInsets.only(
+            left: cardPadding,
+            top: cardPadding + 10.0,
+            right: cardPadding,
+            bottom: cardPadding,
+          ),
+          width: cardWidth,
+          alignment: Alignment.center,
+          child: Form(
+            key: _formAccountConfirmationKey,
+            child: Column(
+              children: [
+                /*Text(
+                  messages.recoverPasswordIntro,
+                  key: kRecoverPasswordIntroKey,
+                  textAlign: TextAlign.center,
+                  style: theme.textTheme.body1,
+                ),*/
+                //SizedBox(height: 20),
+                Text(
+                  messages.confirmAccountDescription,
+                  key: kRecoverPasswordDescriptionKey,
+                  textAlign: TextAlign.center,
+                  style: theme.textTheme.body1,
+                ),
+                SizedBox(height: 20),
+                _buildConfirmationNameField(textFieldWidth, messages, auth),
+                SizedBox(height: 26),
+                _buildConfirmButton(theme, messages),
               ],
             ),
           ),

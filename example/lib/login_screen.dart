@@ -19,6 +19,9 @@ class LoginScreen extends StatelessWidget {
       if (mockUsers[data.name] != data.password) {
         return 'Password does not match';
       }
+      if (mockUsers[data.name] == 'codebar') {
+        return 'ACCOUNT_CONFIRMATION_REQUIRED';
+      }
       return null;
     });
   }
@@ -27,6 +30,15 @@ class LoginScreen extends StatelessWidget {
     return Future.delayed(loginTime).then((_) {
       if (!mockUsers.containsKey(name)) {
         return 'Username not exists';
+      }
+      return null;
+    });
+  }
+
+  Future<String> _accountConfirmation(String code) {
+    return Future.delayed(loginTime).then((_) {
+      if (code != '1234') {
+        return 'Confirmation code not valid';
       }
       return null;
     });
@@ -159,6 +171,11 @@ class LoginScreen extends StatelessWidget {
         print('Name: ${loginData.name}');
         print('Password: ${loginData.password}');
         return _loginUser(loginData);
+      },
+      onAccountConfirmation: (code) {
+        print('Account confirmation info');
+        print('Account confirmation code: $code');
+        return _accountConfirmation(code);
       },
       onSubmitAnimationCompleted: () {
         Navigator.of(context).pushReplacement(FadePageRoute(
