@@ -1,3 +1,7 @@
+## [1.0.15] - Implement “Confirmation code” card (28/09/2020)
+* [#2](https://github.com/NearHuscarl/flutter_login/issues/2)
+* ["Sign-in providers" support](https://github.com/NearHuscarl/flutter_login/pull/79) by [xnio94](https://github.com/xnio94)
+
 ## [1.0.14] - Fix signup textfield not selectable in signup mode (26/01/2020)
 * [#34](https://github.com/NearHuscarl/flutter_login/issues/34)
 
