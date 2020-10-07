@@ -1,6 +1,6 @@
 name: login_lib
 description: A login widget with login/signup functionalities to help speed up development
-version: 1.0.15
+version: 1.0.16
 homepage: https://github.com/NearHuscarl/flutter_login
 
 environment:

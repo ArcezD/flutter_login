@@ -1,3 +1,7 @@
+## [1.0.16] - Changes to “Confirmation code” card (28/09/2020)
+* Add confirmationCode to LoginData
+* Changes to example from flutter_login to login_lib
+
 ## [1.0.15] - Implement “Confirmation code” card (28/09/2020)
 * [#2](https://github.com/NearHuscarl/flutter_login/issues/2)
 * ["Sign-in providers" support](https://github.com/NearHuscarl/flutter_login/pull/79) by [xnio94](https://github.com/xnio94)
