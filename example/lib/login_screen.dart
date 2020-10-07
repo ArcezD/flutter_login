@@ -35,9 +35,9 @@ class LoginScreen extends StatelessWidget {
     });
   }
 
-  Future<String> _accountConfirmation(String code) {
+  Future<String> _accountConfirmation(LoginData data) {
     return Future.delayed(loginTime).then((_) {
-      if (code != '1234') {
+      if (data.confirmationCode != '1234') {
         return 'Confirmation code not valid';
       }
       return null;
@@ -172,10 +172,12 @@ class LoginScreen extends StatelessWidget {
         print('Password: ${loginData.password}');
         return _loginUser(loginData);
       },
-      onAccountConfirmation: (code) {
+      onAccountConfirmation: (loginData) {
         print('Account confirmation info');
-        print('Account confirmation code: $code');
-        return _accountConfirmation(code);
+        print('Name: ${loginData.name}');
+        print('Password: ${loginData.password}');
+        print('Account confirmation code: $loginData.code');
+        return _accountConfirmation(loginData);
       },
       onSubmitAnimationCompleted: () {
         Navigator.of(context).pushReplacement(FadePageRoute(

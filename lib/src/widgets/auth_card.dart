@@ -1028,7 +1028,10 @@ class _AccountConfirmationCardState extends State<_AccountConfirmationCard>
     _formAccountConfirmationKey.currentState.save();
     _submitController.forward();
     setState(() => _isSubmitting = true);
-    final error = await auth.onAccountConfirmation(auth.confirmationCode);
+    final error = await auth.onAccountConfirmation(LoginData(
+        name: auth.email,
+        password: auth.password,
+        confirmationCode: auth.confirmationCode));
 
     if (error != null) {
       showErrorToast(context, error);
@@ -1043,7 +1046,8 @@ class _AccountConfirmationCardState extends State<_AccountConfirmationCard>
     }
   }
 
-  Widget _buildConfirmationNameField(double width, LoginMessages messages, Auth auth) {
+  Widget _buildConfirmationNameField(
+      double width, LoginMessages messages, Auth auth) {
     return AnimatedTextFormField(
       controller: _confirmationCodeController,
       width: width,
